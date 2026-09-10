@@ -18,11 +18,11 @@ const (
 // StartRun abre uma execução. Toda run precisa ser fechada com FinishRun,
 // inclusive em caso de erro: run "running" órfã atrapalha a guarda de sanidade
 // da próxima execução.
-func (in *Ingester) StartRun(ctx context.Context, storeID string) (int64, error) {
+func (in *Ingester) StartRun(ctx context.Context, storeID string, partial bool) (int64, error) {
 	var id int64
 	err := in.pool.QueryRow(ctx,
-		`insert into collection_runs (store_id, status) values ($1, $2) returning id`,
-		storeID, StatusRunning).Scan(&id)
+		`insert into collection_runs (store_id, status, partial) values ($1, $2, $3) returning id`,
+		storeID, StatusRunning, partial).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("abrir run: %w", err)
 	}
@@ -49,14 +49,15 @@ func (in *Ingester) FinishRun(ctx context.Context, runID int64, itemsFound, requ
 	return nil
 }
 
-// LastSuccessfulItemCount devolve quantos itens a última coleta bem-sucedida
-// daquele mercado encontrou. O segundo retorno é false na primeira execução,
-// quando não há histórico com que comparar.
+// LastSuccessfulItemCount devolve quantos itens a última coleta completa e
+// bem-sucedida daquele mercado encontrou. Coletas parciais (restritas a
+// algumas categorias) são ignoradas: usá-las de baseline neutralizaria a
+// guarda de sanidade. O segundo retorno é false quando não há histórico.
 func (in *Ingester) LastSuccessfulItemCount(ctx context.Context, storeID string) (int, bool, error) {
 	var n int
 	err := in.pool.QueryRow(ctx,
 		`select items_found from collection_runs
-		  where store_id = $1 and status = $2
+		  where store_id = $1 and status = $2 and not partial
 		  order by finished_at desc limit 1`,
 		storeID, StatusSuccess).Scan(&n)
 	switch {
