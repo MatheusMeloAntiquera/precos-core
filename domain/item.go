@@ -7,8 +7,9 @@ import (
 	"strings"
 )
 
-// Price guarda valores em centavos. Nunca use float para dinheiro: 1.97*100
-// em float64 resulta em 196.99999999999997, que truncado vira 196 centavos.
+// Price guarda valores em centavos. Nunca use float para dinheiro: 5,7% dos
+// preços de dois decimais truncam errado ao passar por float64 (0.29 vira 28
+// centavos, 1.13 vira 112).
 type Price struct {
 	Cents     int64 // preço efetivo (o que o cliente paga)
 	ListCents int64 // preço "de", quando existir
