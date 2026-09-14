@@ -106,8 +106,10 @@ func (in *Ingester) Submit(ctx context.Context, storeID string, items []domain.I
 		if err := it.Validate(); err != nil {
 			return res, fmt.Errorf("item inválido: %w", err)
 		}
+		// A coluna ean recebe o valor normalizado: nunca grave em ean algo que
+		// não serviria de chave compartilhada.
 		rows = append(rows, []any{
-			it.MatchKey(storeID), it.EAN, it.Name, it.NameAtStore, it.ImageURL,
+			it.MatchKey(storeID), domain.NormalizeEAN(it.EAN), it.Name, it.NameAtStore, it.ImageURL,
 			it.ProductURL, it.Unit, it.StoreSKUKey,
 			it.Price.Cents, it.Price.ListCents, it.Price.ClubCents, it.Available,
 		})

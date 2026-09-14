@@ -32,11 +32,11 @@ type Item struct {
 // MatchKey é a chave determinística de upsert em products.
 //
 // O EAN não serve sozinho porque itens de peso (hortifrúti, açougue, padaria)
-// vêm sem código de barras. Nesses casos a identidade fica restrita ao mercado
-// de origem, que é exatamente o problema de casamento entre catálogos adiado
-// para quando houver um segundo mercado.
+// vêm sem código de barras, ou com um código interno no lugar dele. Só um GTIN
+// válido vira chave compartilhada entre mercados; o resto fica restrito ao
+// mercado de origem.
 func (i Item) MatchKey(storeID string) string {
-	if ean := strings.TrimSpace(i.EAN); ean != "" {
+	if ean := NormalizeEAN(i.EAN); ean != "" {
 		return ean
 	}
 	return storeID + ":" + i.StoreSKUKey

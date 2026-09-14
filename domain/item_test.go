@@ -21,6 +21,19 @@ func TestMatchKey(t *testing.T) {
 	if got := branco.MatchKey("loja"); got != "loja:12345" {
 		t.Errorf("MatchKey = %q com EAN em branco", got)
 	}
+
+	// PLU no campo de código de barras também não: dois mercados com o mesmo
+	// PLU para produtos diferentes virariam a mesma linha.
+	plu := Item{StoreSKUKey: "1826", EAN: "1113"}
+	if got := plu.MatchKey("barracao-bauru"); got != "barracao-bauru:1826" {
+		t.Errorf("MatchKey = %q com PLU, esperava barracao-bauru:1826", got)
+	}
+
+	// UPC-A e EAN-13 do mesmo item precisam dar a mesma chave.
+	upc := Item{StoreSKUKey: "1", EAN: "012345678905"}
+	if got := upc.MatchKey("loja"); got != "0012345678905" {
+		t.Errorf("MatchKey = %q com UPC-A, esperava 0012345678905", got)
+	}
 }
 
 func TestValidate(t *testing.T) {

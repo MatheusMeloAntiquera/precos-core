@@ -1,0 +1,25 @@
+# Postgres local compartilhado por todos os workers.
+#
+# Mora no core, e não em cada worker: o compose prefixa volumes com o nome do
+# projeto, então um compose por repositório criaria um banco por worker e a
+# consulta de comparação nunca veria dois mercados juntos.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: precos
+      POSTGRES_PASSWORD: precos
+      POSTGRES_DB: precos
+    ports:
+      - "5432:5432"
+    volumes:
+      - precos-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U precos -d precos"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  precos-pgdata:
+    name: precos-pgdata
